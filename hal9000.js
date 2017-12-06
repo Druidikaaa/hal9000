@@ -5,9 +5,9 @@ const token = require('./settings.json').token;
 var mirrors;
 
 require('fs').readFile('./mirrors.json', 'utf8', function (err, data) {
-    if (err) 
+    if (err) {
        console.log('error while reading file');
-
+    }
     mirrors = JSON.parse(data);
 });
 
@@ -24,6 +24,37 @@ client.on("ready", () => {
 });
 
 client.on("message", (message) => {
+  mirrorMessageToMirrorChannels(message);
+
+  if (message.content.startsWith("!:")) {
+    processCommands(message);
+  }
+});
+
+function processCommands(message) {
+  if (!isAuthorAuthorized(message.author)) {
+    return;
+  }
+
+  if (message.content === "!:cleanse") {
+    if (isMessageChannelInMirrorList(message.channel)) {
+      deleteStuff(message);
+    } else {
+      console.log("Channel not in mirror list!");
+      message.channel.send("**Der Channel wird bisher nicht gespiegelt und kann nicht gesäubert werden!**");
+    }
+  }
+}
+
+function isAuthorAuthorized(author) {
+  if (author.id === myId) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function mirrorMessageToMirrorChannels(message) {
   if (isMessageChannelInMirrorList(message.channel)) {
     var originalAuthor = '**' + message.author.username + ':** ';
     var mirrorMessage = originalAuthor + message.content;
@@ -40,14 +71,14 @@ client.on("message", (message) => {
       if (message.attachments.array().length == 0) {
         mirrorChannel.send(mirrorMessage);
       } else {
-        mirrorChannel.send(mirrorMessage, new Discord.Attachment(message.attachments.array()[0].url))
+        mirrorChannel.send(mirrorMessage, new Discord.Attachment(message.attachments.array()[0].url));
       }
 
     }
   }
-});
+}
 
-client.on('message', msg => {
+function deleteStuff(msg) {
   
   let deleteStuff = () => {
     let count = 0;
@@ -82,13 +113,9 @@ client.on('message', msg => {
      });
   };
 
-  if(msg.channel.id === councilId 
-      && msg.content === '!:cleanse' 
-      && msg.author.id === myId) {
-    console.log('Versuche zu loeschen');
-    deleteStuff();
-  }
-});
+  console.log('Versuche zu loeschen');
+  deleteStuff();
+}
 
 client.login(token);
 
