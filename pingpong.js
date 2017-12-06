@@ -2,6 +2,15 @@ const Discord = require("discord.js");
 const client = new Discord.Client();
 const token = require('./settings.json').token;
 
+var mirrors;
+
+require('fs').readFile('./mirrors.json', 'utf8', function (err, data) {
+    if (err) 
+       console.log('error while reading file');
+
+    mirrors = JSON.parse(data);
+});
+
 const myId = '197405517767901186';
 
 const councilId = '373156771398811650';
@@ -14,33 +23,29 @@ client.on("ready", () => {
   console.log("I am ready!");
 });
 
-/*
 client.on("message", (message) => {
-  if (message.author.id === myId) {
-    console.log('Enno hat in Channel ' + message.channel.id + ' geschrieben!');
-  }
-});*/
+  if (isMessageChannelInMirrorList(message.channel)) {
+    var originalAuthor = '**' + message.author.username + ':** ';
+    var mirrorMessage = originalAuthor + message.content;
+    
+    var originList = mirrors.originList;
 
+    var foundOriginObject = originList.filter(function(originItem) {
+      return originItem.id == message.channel.id;
+    });
 
-client.on("message", (message) => {
-  if (message.channel.id === rumtestenId) {
-    const userAndTime = message.author.username + ' ' + message.createdAt + ': ';
-    const mirrorMessage = colorizeText(userAndTime) + message.content;
+    for (var i = 0; i < foundOriginObject[0].mirrorList.length; i++) {
+      var mirrorId = foundOriginObject[0].mirrorList[i].id;
+      var mirrorChannel = client.channels.find('id', mirrorId);
+      if (message.attachments.array().length == 0) {
+        mirrorChannel.send(mirrorMessage);
+      } else {
+        mirrorChannel.send(mirrorMessage, new Discord.Attachment(message.attachments.array()[0].url))
+      }
 
-    const channelRumtestenSpiegel = client.channels.find('id', rumtestenSpiegel);
-    channelRumtestenSpiegel.send(mirrorMessage);
+    }
   }
 });
-
-/*
-client.on("message", (message) => {
-  if (message.channel.id === councilId) {
-    const mirrorMessage = message.author.username + ' ' + message.createdAt + ': ' + message.content;
-
-    const channelCouncilMirror = client.channels.find('id', councilMirrorId);
-    channelCouncilMirror.send(mirrorMessage);
-  }
-});*/
 
 client.on('message', msg => {
   
@@ -76,7 +81,6 @@ client.on('message', msg => {
        console.log(err);
      });
   };
-  console.log(msg.author.id + ' hat: "' + msg.content + '" in Channel ' + msg.channel.id + ' geschrieben!');
 
   if(msg.channel.id === councilId 
       && msg.content === '!:cleanse' 
@@ -88,9 +92,13 @@ client.on('message', msg => {
 
 client.login(token);
 
-function colorizeText(text) {
-  const markDownPrefix = "```fix\n";
-  const markDownSuffix = "```"
+function isMessageChannelInMirrorList(channel) {
+  var originList = mirrors.originList;
 
-  return markDownPrefix + text + markDownSuffix;
+  for (var i = 0; i < originList.length; i++) {
+    if (originList[i].id === channel.id) {
+      return true;
+    }
+  }
+  return false;
 }
