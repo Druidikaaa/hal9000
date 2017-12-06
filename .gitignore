@@ -1,0 +1,4 @@
+/node_modules/
+
+#specific files
+settings.json
