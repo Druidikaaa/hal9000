@@ -51,23 +51,50 @@ function processCommands(message) {
 
   if (message.content === "!:addMirror") {
     if (isMessageChannelInOriginList(message.channel)) {
-      var mirrorChannelId = createMirrorForOrigin(message.channel);
-      
+      createMirrorForOrigin(message.channel);
     } else {
       console.log("Channel is not yet in origin list!");
       message.channel.send("**Der Channel wird bisher nicht gespiegelt!**");
     }
   }
+
+  if (message.content === "!:addOrigin") {
+    if (!isMessageChannelInOriginList(message.channel)) {
+      var originChannelId = createOrigin(message.channel);
+    }
+  }
+
+  if (message.content === "!:deleteMirror") {
+    deleteMessageChannelInOriginsMirrorList(message.channel)
+  }
+}
+
+function deleteMessageChannelInOriginsMirrorList(channel) {
+  var originList = mirrors.originList;
+
+  for (var i = 0; i < originList.length; i++) {
+    var mirrorList = originList[i].mirrorList;
+    for (var j = 0; j < mirrorList.length; j++) {
+      if (mirrorList[j].id === channel.id) {
+        mirrorList.splice(j,1);
+        writeFile(mirrors, "mirrors.json");
+        channel.delete().catch(console.error);;
+      }
+    }
+  }
+}
+
+function createOrigin(channel) {
+  var originId = channel.id;
+  mirrors.originList.push({"id" : originId, "mirrorList" : []});
+  writeFile(mirrors, "mirrors.json");
 }
 
 function createMirrorForOrigin(channel) {
   var mirrorChannelName = channel.name + "_seit_" + getCurrentDate();
   console.log(mirrorChannelName);
-  var mirrorChannelId;
   channel.guild.createChannel(mirrorChannelName, "text")
-    //.then(newChannel => newChannel.setParent(historyId))
     .then(newChannel => addMirrorToOrigin(channel, newChannel.id));
-  return mirrorChannelId;
 }
 
 function getCurrentDate() {
