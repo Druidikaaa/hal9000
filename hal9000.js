@@ -1,3 +1,5 @@
+'use strict';
+
 const Discord = require("discord.js");
 const client = new Discord.Client();
 const token = require('./settings.json').token;
@@ -5,14 +7,6 @@ const historyId = require('./navigationIds.json').historyId;
 const fs = require('fs');
 
 var mirrors;
-
-fs.readFile('./mirrors.json', 'utf8', function (err, data) {
-    if (err) {
-        console.log('error while reading file');
-    }
-    mirrors = JSON.parse(data);
-    //console.log(JSON.stringify(data, null, "\t"));
-});
 
 const myId = '197405517767901186';
 
@@ -22,59 +16,117 @@ const councilMirrorId = '381477218292989953';
 const rumtestenId = '381479229059104769';
 const rumtestenSpiegel = '381488016759455744';
 
-client.on("ready", () => {
+const vizesString = "<@&373157594963116032>";
+const regelnString = "<#373156391071776798>";
+
+client.once("ready", () => {
     console.log("I am ready!");
 });
 
-client.on("message", (message) => {
-    mirrorMessageToMirrorChannels(message);
+client.login(token);
 
-    if (message.content.startsWith("!:")) {
+var willkommensText = "Willkommen bei Old School.\nBitte stelle dich einmal kurz vor";
+
+client.on("message", (message) => {
+    const channelName = message.channel.name;
+    const messageInhalt = message.content;
+
+    reactToSchwachsinn(message);
+
+    if (messageInhalt.startsWith("!!!") && channelName === 'leaders') {
+        leaderChannelCommands(message);
+    }
+
+    if (messageInhalt.startsWith("!:")) {
         processCommands(message);
     }
 });
 
+/**
+ * User betritt den Server
+ */
+client.on("guildMemberAdd", (member) => {
+    let username = member.user.username;
+    const gesammtText = "Hallo " + username + "\n" + willkommensText + "\n" + "unsere Regeln findest du hier " + regelnString + "\n" + vizesString;
+    const channel = member.guild.channels.find(channel => channel.name === "willkommen");
+    channel.send(gesammtText);
+});
+
+/**
+ *  User verlässt den Server (kick/ban/leave)
+ */
+client.on("guildMemberRemove", (member) => {
+    let username = member.user.username;
+    const channel = member.guild.channels.find(channel => channel.name === "willkommen");
+    const text = username + " hat den Server verlassen";
+    channel.send(text);
+});
+
+function leaderChannelCommands(message) {
+    let channel = message.channel;
+    let username = message.member.user.username;
+    let messageInhalt = message.content;
+
+    if (messageInhalt === "!!!getHallo") {
+        channel.send(willkommensText);
+    }
+
+    if (messageInhalt.startsWith("!!!setHallo:")) {
+        console.log(messageInhalt);
+        let inhalt = messageInhalt.substring(12);
+        channel.send("Willkoemmenstext geändert zu:\n" + inhalt);
+        console.log(inhalt);
+        willkommensText = inhalt;
+    }
+
+    if (messageInhalt === '!!!TestHallo') {
+        const gesammtText = "Hallo " + username + "\n" + willkommensText + "\n" + "unsere Regeln findest du hier " + regelnString + "\n" + vizesString;
+        channel.send(gesammtText);
+    }
+}
+
 function processCommands(message) {
+
+    let channel = message.channel;
     if (!isAuthorAuthorized(message.author)) {
-        message.channel.send("**Denk nicht mal dran!**", {"reply": message.author})
+        channel.send("**Denk nicht mal dran!**", {"reply": message.author});
         return;
     }
 
-    if (message.content === "!:cleanse") {
-        if (isMessageChannelInOriginList(message.channel)) {
-            deleteStuff(message);
-        } else {
-            console.log("Channel not in origin list!");
-            message.channel.send("**Der Channel wird bisher nicht gespiegelt und kann nicht gesäubert werden!**");
-        }
-    }
-
-    if (message.content === "!:addMirror") {
-        if (isMessageChannelInOriginList(message.channel)) {
-            createMirrorForOrigin(message.channel);
-        } else {
-            console.log("Channel is not yet in origin list!");
-            message.channel.send("**Der Channel wird bisher nicht gespiegelt!**");
-        }
-    }
-
-    if (message.content === "!:addOrigin") {
-        if (!isMessageChannelInOriginList(message.channel)) {
-            var originChannelId = createOrigin(message.channel);
-        }
-    }
-
-    if (message.content === "!:deleteMirror") {
-        deleteMessageChannelInOriginsMirrorList(message.channel)
+    switch (message.content) {
+        case "!:cleanse":
+            if (isMessageChannelInOriginList(channel)) {
+                deleteStuff(message);
+            } else {
+                console.log("Channel not in origin list!");
+                channel.send("**Der Channel wird bisher nicht gespiegelt und kann nicht gesäubert werden!**");
+            }
+            break;
+        case "!:addMirror":
+            if (isMessageChannelInOriginList(channel)) {
+                createMirrorForOrigin(channel);
+            } else {
+                console.log("Channel is not yet in origin list!");
+                channel.send("**Der Channel wird bisher nicht gespiegelt!**");
+            }
+            break;
+        case "!:addOrigin":
+            if (!isMessageChannelInOriginList(channel)) {
+                var originChannelId = createOrigin(channel);
+            }
+            break;
+        case "!:deleteMirror":
+            deleteMessageChannelInOriginsMirrorList(channel);
+            break;
     }
 }
 
 function deleteMessageChannelInOriginsMirrorList(channel) {
-    var originList = mirrors.originList;
+    let originList = mirrors.originList;
 
-    for (var i = 0; i < originList.length; i++) {
-        var mirrorList = originList[i].mirrorList;
-        for (var j = 0; j < mirrorList.length; j++) {
+    for (let i = 0; i < originList.length; i++) {
+        let mirrorList = originList[i].mirrorList;
+        for (let j = 0; j < mirrorList.length; j++) {
             if (mirrorList[j].id === channel.id) {
                 mirrorList.splice(j, 1);
                 writeFile(mirrors, "mirrors.json");
@@ -93,20 +145,21 @@ function createOrigin(channel) {
 function createMirrorForOrigin(channel) {
     var mirrorChannelName = channel.name + "_seit_" + getCurrentDate();
     console.log(mirrorChannelName);
-    channel.guild.createChannel(mirrorChannelName, "text")
-        .then(newChannel => addMirrorToOrigin(channel, newChannel.id));
+    channel.guild.createChannel(mirrorChannelName, "text").then(newChannel => addMirrorToOrigin(channel, newChannel.id));
 }
 
 function getCurrentDate() {
-    var date = new Date();
+    const date = new Date();
+    const year = date.getFullYear();
+    let month = date.getMonth() + 1;
+    if (month < 10) {
+        month = '0' + month
+    }
 
-    var year = date.getFullYear();
-
-    var month = date.getMonth() + 1;
-    month = (month < 10 ? "0" : "") + month;
-
-    var day = date.getDate();
-    day = (day < 10 ? "0" : "") + day;
+    let day = date.getDate();
+    if (day < 10) {
+        day = '0' + day
+    }
 
     return day + month + year;
 }
@@ -134,18 +187,18 @@ function isAuthorAuthorized(author) {
 
 function mirrorMessageToMirrorChannels(message) {
     if (isMessageChannelInOriginList(message.channel)) {
-        var originalAuthor = '**' + message.author.username + ':** ';
-        var mirrorMessage = originalAuthor + message.content;
+        let originalAuthor = '**' + message.author.username + ':** ';
+        let mirrorMessage = originalAuthor + message.content;
 
-        var originList = mirrors.originList;
+        let originList = mirrors.originList;
 
-        var foundOriginObject = originList.filter(function (originItem) {
+        let foundOriginObject = originList.filter(function (originItem) {
             return originItem.id === message.channel.id;
         });
 
-        for (var i = 0; i < foundOriginObject[0].mirrorList.length; i++) {
-            var mirrorId = foundOriginObject[0].mirrorList[i].id;
-            var mirrorChannel = client.channels.find('id', mirrorId);
+        for (let i = 0; i < foundOriginObject[0].mirrorList.length; i++) {
+            let mirrorId = foundOriginObject[0].mirrorList[i].id;
+            let mirrorChannel = client.channels.find('id', mirrorId);
             if (message.attachments.array().length === 0) {
                 mirrorChannel.send(mirrorMessage);
             } else {
@@ -195,15 +248,51 @@ function deleteStuff(msg) {
     deleteStuff();
 }
 
-client.login(token);
 
 function isMessageChannelInOriginList(channel) {
-    var originList = mirrors.originList;
+    let originList = mirrors.originList;
 
-    for (var i = 0; i < originList.length; i++) {
+    for (let i = 0; i < originList.length; i++) {
         if (originList[i].id === channel.id) {
             return true;
         }
     }
     return false;
+}
+
+function reactToSchwachsinn(message) {
+
+    let emoji = null;
+    switch (message.content) {
+        case 'Miau':
+        case 'Meow':
+            emoji = "🐱";
+            break;
+        case'Wau':
+        case'Wuff':
+            emoji = "🐶";
+            break;
+        case 'Eis':
+            emoji = "🍦";
+            break;
+        case 'Mist':
+        case 'Kacke':
+            emoji = "💩";
+            break;
+        case 'Snow':
+            emoji = "☃";
+            break;
+        case 'Satt':
+            emoji = "🤰";
+            break;
+        case 'Tanz':
+            emoji = "💃";
+            break;
+        case 'Nacht':
+            emoji = "💤";
+            break;
+        default:
+            return;
+    }
+    Promise.all(message.react(emoji));
 }
