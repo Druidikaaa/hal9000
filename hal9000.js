@@ -25,6 +25,8 @@ client.once("ready", () => {
 
 client.login(token);
 
+client.on('error', console.error);
+
 var willkommensText = "Willkommen bei Old School.\nBitte stelle dich einmal kurz vor";
 
 client.on("message", (message) => {
@@ -294,5 +296,5 @@ function reactToSchwachsinn(message) {
         default:
             return;
     }
-    Promise.all(message.react(emoji));
+    message.react(emoji);
 }
