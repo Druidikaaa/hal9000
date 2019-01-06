@@ -3,8 +3,15 @@
 const Discord = require("discord.js");
 const client = new Discord.Client();
 const token = require('./settings.json').token;
+const coc_token = require('./settings.json').coc_token;
 const historyId = require('./navigationIds.json').historyId;
 const fs = require('fs');
+const schedule = require('node-schedule');
+
+// const clashApi = require('clash-of-clans-api');
+// let cocApi = clashApi({
+//     token: coc_token
+// });
 
 var mirrors;
 
@@ -12,8 +19,10 @@ const myId = '197405517767901186';
 
 const councilId = '373156771398811650';
 const councilMirrorId = '381477218292989953';
-
 const rumtestenId = '381479229059104769';
+const newcommerId = '380021563640250380';
+const abstimmenId = '478502845751230464';
+const leaderId = '527943945808773130';
 const rumtestenSpiegel = '381488016759455744';
 
 const vizesString = "<@&373157594963116032>";
@@ -21,26 +30,43 @@ const regelnString = "<#373156391071776798>";
 
 client.once("ready", () => {
     console.log("I am ready!");
+    //cocApi.clanWarlogByTag('#99UCPJ89').then(response => console.log(response)).catch(err => console.log(err));
 });
-
 client.login(token);
 
-client.on('error', console.error);
+client.on("error", (e) => console.error(e));
+client.on("warn", (e) => console.warn(e));
 
-var willkommensText = "Willkommen bei Old School.\nBitte stelle dich einmal kurz vor";
+const willkommensText = "Willkommen bei Old School.\nBitte stelle dich einmal kurz vor";
 
 client.on("message", (message) => {
-    const channelName = message.channel.name;
+    const channelId = message.channel.id;
     const messageInhalt = message.content;
 
+    console.log(channelId);
     reactToSchwachsinn(message);
 
-    if (messageInhalt.startsWith("!!!") && channelName === 'leaders') {
+    if (messageInhalt.startsWith("!!!") && channelId === leaderId) {
         leaderChannelCommands(message);
     }
 
     if (messageInhalt.startsWith("!:")) {
         processCommands(message);
+    }
+
+    if (messageInhalt.startsWith("!!") && channelId === newcommerId) {
+        saveNewcommer(message);
+    }
+    if (messageInhalt === "!list" && channelId === newcommerId) {
+        readNewcommerList(message);
+    }
+    // für test
+    // if (messageInhalt === "!check" && channelId === rumtestenId) {
+    //     checkNewcommerList(message);
+    // }
+
+    if (messageInhalt.startsWith("!delete") && channelId === newcommerId) {
+        deleteNewcommer(message);
     }
 });
 
@@ -73,18 +99,145 @@ function leaderChannelCommands(message) {
         channel.send(willkommensText);
     }
 
-    if (messageInhalt.startsWith("!!!setHallo:")) {
-        console.log(messageInhalt);
-        let inhalt = messageInhalt.substring(12);
-        channel.send("Willkoemmenstext geändert zu:\n" + inhalt);
-        console.log(inhalt);
-        willkommensText = inhalt;
-    }
-
     if (messageInhalt === '!!!TestHallo') {
         const gesammtText = "Hallo " + username + "\n" + willkommensText + "\n" + "unsere Regeln findest du hier " + regelnString + "\n" + vizesString;
         channel.send(gesammtText);
     }
+}
+
+function saveNewcommer(message) {
+    let channel = message.channel;
+    let name = message.toString();
+    name = name.replace(/[^\w]/g, '');
+    if (name === "") {
+        return;
+    }
+    let date = new Date();
+    date = addDays(date, 7);
+    let day = date.getDate();
+    let month = date.getMonth() + 1;
+    let year = date.getFullYear();
+    let probezeitBis = day + "." + month + "." + year;
+    console.log("Probezeit " + probezeitBis);
+    fs.readFile('newcommer.json', 'utf8', function readFileCallback(err, data) {
+        if (err) {
+            console.error(err);
+        } else {
+            let obj = JSON.parse(data);
+            if (!Array.isArray(obj.table)) {
+                obj.table = [];
+            }
+            obj.table.push(name + ":" + probezeitBis);
+            let json = JSON.stringify(obj);
+
+            writeFile(obj, 'newcommer.json');
+        }
+    });
+    channel.send(vizesString + "\nNewcommer " + name + " gespeichert.\nProbezeit bis: " + probezeitBis);
+}
+
+/**
+ * Liest die newcommer.json und gibt alle Namen mit Probezeit aus.
+ */
+function readNewcommerList(message) {
+    fs.readFile('newcommer.json', (err, data) => {
+        if (err) throw err;
+        let array = JSON.parse(data).table;
+        let string = "Probezeiten:\n";
+        if (array === undefined) return;
+        array.forEach(function (value) {
+            string = string + value + "\n";
+        });
+        message.channel.send(string);
+    });
+}
+
+/*
+* ab 18:00:00.
+*/
+schedule.scheduleJob('* * 18 * * *', function () {
+        console.log("Newcommer Job läuft");
+        try {
+            checkNewcommerList()
+        } catch (e) {
+            console.error("Fehler beim Newcommer Job ", e);
+        }
+    }
+);
+
+/**
+ * überprüft Die newcommer.json auf überfällige Probezeiten und gibt sie im Abstimmungschannel aus
+ */
+function checkNewcommerList() {
+    let abstimmenChannel = client.channels.get(abstimmenId);
+
+    fs.readFile('newcommer.json', (err, data) => {
+        if (err) throw err;
+        let array = JSON.parse(data).table;
+        if (array.length === 0) {
+            abstimmenChannel.send("Keine Neulinge in der Probezeit Liste");
+            return;
+        }
+        const vorher = array.length;
+        const today = new Date();
+        for (let i = array.length - 1; i >= 0; i--) {
+            let value = array[i];
+            let string = value.split(':');
+            let player = string[0];
+            let dateArray = string[1].split('.');
+            let day = dateArray[0];
+            let month = dateArray[1];
+            let year = dateArray[2];
+            let probezeit = new Date(year, month - 1, day);
+            if (today > probezeit) {
+                abstimmenChannel.send(vizesString + "\nProbezeit von " + player + " ist um\nBitte alle bis morgen 18 Uhr abstimmen. \n\n 1) dabei\n2) raus");
+                array.splice(i, 1);
+            }
+        }
+        console.log("Anzahl Newcommer in der Liste: " + array.length);
+
+        if (array.length < vorher) {
+            let obj = {table: array};
+            writeFile(obj, 'newcommer.json');
+        } else {
+            abstimmenChannel.send("Keine Neulinge über der Probezeit.");
+        }
+    });
+}
+
+/**
+ * Löscht einen Namen aus der newcommer.json Liste
+ * @param message
+ */
+function deleteNewcommer(message) {
+
+    let channel = message.channel;
+    let name = message.toString().split(" ")[1];
+    if (name === undefined) {
+        return;
+    }
+    name = name.replace(/[^\w]/g, '');
+
+    fs.readFile('newcommer.json', (err, data) => {
+        if (err) throw err;
+        let array = JSON.parse(data).table;
+        const vorher = array.length;
+        for (let i = array.length - 1; i >= 0; i--) {
+            let value = array[i];
+            let string = value.split(':');
+            let player = string[0];
+            if (player === name) {
+                array.splice(i, 1);
+            }
+        }
+        if (array.length < vorher) {
+            let obj = {table: array};
+            writeFile(obj, 'newcommer.json');
+            channel.send(name + " wurde gelöscht");
+        } else {
+            channel.send(name + " wurde nicht gefunden");
+        }
+    });
 }
 
 function processCommands(message) {
@@ -177,9 +330,9 @@ function addMirrorToOrigin(channel, mirrorChannelId) {
 }
 
 function writeFile(object, filename) {
-    fs.writeFile(filename, JSON.stringify(object, null, "\t"), (err) => {
+    fs.writeFile(filename, JSON.stringify(object, null, "\t"), 'utf8', (err) => {
         if (err) throw err;
-        console.log('Data written to file');
+        console.log('Data written to file ' + filename);
     });
 }
 
@@ -297,4 +450,9 @@ function reactToSchwachsinn(message) {
             return;
     }
     message.react(emoji);
+}
+
+function addDays(date, days) {
+    date.setTime(date.getTime() + days * 86400000);
+    return date;
 }
