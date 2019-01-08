@@ -5,7 +5,6 @@ const strings = require('../konstanten/strings.json');
 const mirrorClass = require('./mirror');
 const Utils = require('./utils.js');
 
-const willkommensText = "Willkommen bei Old School.\nBitte stelle dich einmal kurz vor";
 
 class messageHandler {
 
@@ -19,11 +18,11 @@ class messageHandler {
         let messageInhalt = message.content;
 
         if (messageInhalt === "!!!getHallo") {
-            channel.send(willkommensText);
+            channel.send(strings.willkommensText);
         }
 
         if (messageInhalt === '!!!TestHallo') {
-            const gesammtText = "Hallo " + username + "\n" + willkommensText + "\n" + "unsere Regeln findest du hier " + strings.regelnString + "\n" + strings.vizesString;
+            const gesammtText = "Hallo " + username + "\n" + strings.willkommensText + "\n" + "unsere Regeln findest du hier " + strings.regelnString + "\n" + strings.vizesString;
             channel.send(gesammtText);
         }
     }

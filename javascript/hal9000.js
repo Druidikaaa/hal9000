@@ -28,7 +28,7 @@ client.once("ready", () => {
 client.login(token);
 
 const newcommerFeature = new newcommerClass(client);
-const messageHandler  = new messageHandlerClass(client);
+const messageHandler = new messageHandlerClass(client);
 
 client.on("error", (e) => console.error(e));
 client.on("warn", (e) => console.warn(e));
@@ -47,10 +47,10 @@ client.on("message", (message) => {
         messageHandler.processCommands(message);
     }
 
-    if (messageInhalt.startsWith("!!") && channelId === rumtestenId) {
+    if (messageInhalt.startsWith("!!") && channelId === newcommerId) {
         newcommerFeature.saveNewcommer(message);
     }
-    if (messageInhalt === "!list" && channelId === rumtestenId) {
+    if (messageInhalt === "!list" && channelId === newcommerId) {
         newcommerFeature.readNewcommerList(message);
     }
     // für test
@@ -58,7 +58,7 @@ client.on("message", (message) => {
     //     newcommerFeature.checkNewcommerList(message);
     // }
 
-    if (messageInhalt.startsWith("!delete") && channelId === rumtestenId) {
+    if (messageInhalt.startsWith("!delete") && channelId === newcommerId) {
         newcommerFeature.deleteNewcommer(message);
     }
 });
@@ -68,7 +68,7 @@ client.on("message", (message) => {
  */
 client.on("guildMemberAdd", (member) => {
     let username = member.user.username;
-    const gesammtText = "Hallo " + username + "\n" + willkommensText + "\n" + "unsere Regeln findest du hier " + strings.regelnString + "\n" + strings.vizesString;
+    const gesammtText = "Hallo " + username + "\n" + strings.willkommensText + "\n" + "unsere Regeln findest du hier " + strings.regelnString + "\n" + strings.vizesString;
     const channel = member.guild.channels.find(channel => channel.name === "willkommen");
     channel.send(gesammtText);
 });
