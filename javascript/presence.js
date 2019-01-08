@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 const client = new Discord.Client();
-const token = require('./settings.json').token;
+const token = require('../settings.json').token;
 const fs = require('fs');
 
 const presenceChannelId = '391341331839975456';
