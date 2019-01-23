@@ -5,7 +5,7 @@ const strings = require('../konstanten/strings');
 const channels = require('../konstanten/channelId');
 const Utils = require('./utils.js');
 
-const newcommerPath = '../newcommer.json';
+const newcommerPath = __dirname + '/../newcommer.json';
 
 class newcommerFeature {
 

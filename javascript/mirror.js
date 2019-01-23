@@ -4,7 +4,7 @@ const Discord = require("discord.js");
 const Utils = require('./utils.js');
 const channelId = require('../konstanten/channelId.json');
 
-
+const mirrorPath =  __dirname + '/../mirrors.json';
 var mirrors;
 
 class Mirrior {
@@ -21,7 +21,7 @@ class Mirrior {
             for (let j = 0; j < mirrorList.length; j++) {
                 if (mirrorList[j].id === channel.id) {
                     mirrorList.splice(j, 1);
-                    Utils.writeFile(mirrors, "mirrors.json");
+                    Utils.writeFile(mirrors, "mirrorPath");
                     channel.delete().catch(console.error);
                 }
             }
@@ -31,7 +31,7 @@ class Mirrior {
     createOrigin(channel) {
         var originId = channel.id;
         mirrors.originList.push({"id": originId, "mirrorList": []});
-        Utils.writeFile(mirrors, "mirrors.json");
+        Utils.writeFile(mirrors, "mirrorPath");
     }
 
     createMirrorForOrigin(channel) {
@@ -48,7 +48,7 @@ class Mirrior {
 
         foundOriginObject[0].mirrorList.push({"id": mirrorChannelId});
 
-        Utils.writeFile(mirrors, "mirrors.json");
+        Utils.writeFile(mirrors, "mirrorPath");
     }
 
 

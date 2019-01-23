@@ -55,10 +55,10 @@ client.on("message", (message) => {
         messageHandler.processCommands(message);
     }
 
-    if (messageInhalt.startsWith("!!") && channelId === newcommerId) {
+    if (messageInhalt.startsWith("!!") && channelId === rumtestenId) {
         newcommerFeature.saveNewcommer(message);
     }
-    if (messageInhalt === "!list" && channelId === newcommerId) {
+    if (messageInhalt === "!list" && channelId === rumtestenId) {
         newcommerFeature.readNewcommerList(message);
     }
     // für test
