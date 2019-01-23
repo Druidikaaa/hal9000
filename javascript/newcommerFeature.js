@@ -5,12 +5,15 @@ const strings = require('../konstanten/strings');
 const channels = require('../konstanten/channelId');
 const Utils = require('./utils.js');
 
+const newcommerPath = '../newcommer.json';
 
 class newcommerFeature {
 
     constructor(client) {
         this.client = client
     }
+    
+
 
     /**
      * überprüft Die newcommer.json auf überfällige Probezeiten und gibt sie im Abstimmungschannel aus
@@ -18,7 +21,7 @@ class newcommerFeature {
     checkNewcommerList() {
         let abstimmenChannel = this.client.channels.get(channels.abstimmenId);
 
-        fs.readFile('newcommer.json', (err, data) => {
+        fs.readFile(newcommerPath, (err, data) => {
             if (err) throw err;
             let array = JSON.parse(data).table;
             if (array.length === 0) {
@@ -45,7 +48,7 @@ class newcommerFeature {
 
             if (array.length < vorher) {
                 let obj = {table: array};
-                Utils.writeFile(obj, 'newcommer.json');
+                Utils.writeFile(obj, newcommerPath);
             } else {
                 abstimmenChannel.send("Keine Neulinge über der Probezeit.");
             }
@@ -65,7 +68,7 @@ class newcommerFeature {
         }
         name = name.replace(/[^\w]/g, '');
 
-        fs.readFile('newcommer.json', (err, data) => {
+        fs.readFile(newcommerPath, (err, data) => {
             if (err) throw err;
             let array = JSON.parse(data).table;
             const vorher = array.length;
@@ -79,7 +82,7 @@ class newcommerFeature {
             }
             if (array.length < vorher) {
                 let obj = {table: array};
-                Utils.writeFile(obj, 'newcommer.json');
+                Utils.writeFile(obj, newcommerPath);
                 channel.send(name + " wurde gelöscht");
             } else {
                 channel.send(name + " wurde nicht gefunden");
@@ -101,7 +104,7 @@ class newcommerFeature {
         let year = date.getFullYear();
         let probezeitBis = day + "." + month + "." + year;
         console.log("Probezeit " + probezeitBis);
-        fs.readFile('newcommer.json', 'utf8', function readFileCallback(err, data) {
+        fs.readFile(newcommerPath, 'utf8', function readFileCallback(err, data) {
             if (err) {
                 console.error(err);
             } else {
@@ -110,7 +113,7 @@ class newcommerFeature {
                     obj.table = [];
                 }
                 obj.table.push(name + ":" + probezeitBis);
-                Utils.writeFile(obj, 'newcommer.json');
+                Utils.writeFile(obj, newcommerPath);
             }
         });
         channel.send(strings.vizesString + "\nNewcommer " + name + " gespeichert.\nProbezeit bis: " + probezeitBis);
@@ -120,7 +123,7 @@ class newcommerFeature {
      * Liest die newcommer.json und gibt alle Namen mit Probezeit aus.
      */
     readNewcommerList(message) {
-        fs.readFile('newcommer.json', (err, data) => {
+        fs.readFile(newcommerPath, (err, data) => {
             if (err) throw err;
             let array = JSON.parse(data).table;
             let string = "Probezeiten:\n";

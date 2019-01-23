@@ -6,6 +6,7 @@ const token = require('../settings.json').token;
 const coc_token = require('../settings.json').coc_token;
 const channelId = require('../konstanten/channelId.json');
 const strings = require('../konstanten/strings.json');
+const version = require('../package.json').version;
 const schedule = require('node-schedule');
 
 const newcommerClass = require('./newcommerFeature.js');
@@ -22,8 +23,10 @@ const abstimmenId = channelId.abstimmenId;
 const leaderId = channelId.leaderId;
 
 client.once("ready", () => {
-    console.log("I am ready!");
-    //cocApi.clanWarlogByTag('#99UCPJ89').then(response => console.log(response)).catch(err => console.log(err));
+    console.log(version + " ist online");
+    let rumtesten = client.channels.get(rumtestenId);
+    // rumtesten.send(version + " ist online");
+    // cocApi.clanWarlogByTag('#99UCPJ89').then(response => console.log(response)).catch(err => console.log(err));
 });
 client.login(token);
 
@@ -36,6 +39,11 @@ client.on("warn", (e) => console.warn(e));
 client.on("message", (message) => {
     const channelId = message.channel.id;
     const messageInhalt = message.content;
+
+    if (messageInhalt === "!version" && channelId === leaderId) {
+        message.channel.send("Aktuelle Version: " + version);
+        return;
+    }
 
     messageHandler.reactToSchwachsinn(message);
 
