@@ -40,8 +40,8 @@ client.on("message", (message) => {
     const channelId = message.channel.id;
     const messageInhalt = message.content;
 
-    if (messageInhalt === "!version" && channelId === leaderId) {
-        message.channel.send("Aktuelle Version: " + version);
+    if (messageInhalt === "!version") {
+        message.channel.send("Version: " + version);
         return;
     }
 
@@ -55,20 +55,23 @@ client.on("message", (message) => {
         messageHandler.processCommands(message);
     }
 
-    if (messageInhalt.startsWith("!!") && channelId === rumtestenId) {
-        newcommerFeature.saveNewcommer(message);
-    }
-    if (messageInhalt === "!list" && channelId === rumtestenId) {
-        newcommerFeature.readNewcommerList(message);
-    }
-    // für test
-    // if (messageInhalt === "!check" && channelId === rumtestenId) {
-    //     newcommerFeature.checkNewcommerList(message);
-    // }
+    if (channelId === newcommerId || channelId === rumtestenId) {
+        if (messageInhalt.startsWith("!!")) {
+            newcommerFeature.saveNewcommer(message);
+        }
+        if (messageInhalt === "!list") {
+            newcommerFeature.readNewcommerList(message);
+        }
+        // für test
+        // if (messageInhalt === "!check" && channelId === rumtestenId) {
+        //     newcommerFeature.checkNewcommerList(message);
+        // }
 
-    if (messageInhalt.startsWith("!delete") && channelId === newcommerId) {
-        newcommerFeature.deleteNewcommer(message);
+        if (messageInhalt.startsWith("!delete")) {
+            newcommerFeature.deleteNewcommer(message);
+        }
     }
+
 });
 
 /**
@@ -91,17 +94,15 @@ client.on("guildMemberRemove", (member) => {
     channel.send(text);
 });
 
-
 /*
 * ab 18:00:00.
 */
-schedule.scheduleJob('* * 18 * * *', function () {
-        console.log("Newcommer Job läuft");
+schedule.scheduleJob('0 18 * * *', function () {
+        console.log("Newcomer Job läuft");
         try {
             newcommerFeature.checkNewcommerList()
         } catch (e) {
-            console.error("Fehler beim Newcommer Job ", e);
+            console.error("Fehler beim Newcomer Job ", e);
         }
     }
 );
-

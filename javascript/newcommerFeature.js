@@ -44,7 +44,7 @@ class newcommerFeature {
                     array.splice(i, 1);
                 }
             }
-            console.log("Anzahl Newcommer in der Liste: " + array.length);
+            console.log("Anzahl Neulinge in der Liste: " + array.length);
 
             if (array.length < vorher) {
                 let obj = {table: array};
@@ -116,7 +116,7 @@ class newcommerFeature {
                 Utils.writeFile(obj, newcommerPath);
             }
         });
-        channel.send(strings.vizesString + "\nNewcommer " + name + " gespeichert.\nProbezeit bis: " + probezeitBis);
+        channel.send(strings.vizesString + "\nNeuling " + name + " gespeichert.\nProbezeit bis: " + probezeitBis);
     };
 
     /**
