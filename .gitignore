@@ -5,4 +5,5 @@ settings.json
 mirrors.json
 lastonline.json
 
+*.log
 *.idea
