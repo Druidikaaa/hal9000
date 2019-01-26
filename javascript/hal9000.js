@@ -8,6 +8,7 @@ const channelId = require('../konstanten/channelId.json');
 const strings = require('../konstanten/strings.json');
 const version = require('../package.json').version;
 const schedule = require('node-schedule');
+const logger = require('./logger');
 
 const newcommerClass = require('./newcommerFeature.js');
 const messageHandlerClass = require('./messageHandler.js');
@@ -22,19 +23,21 @@ const newcommerId = channelId.newcommerId;
 const abstimmenId = channelId.abstimmenId;
 const leaderId = channelId.leaderId;
 
+
+const rumtestenChannel = client.channels.get(rumtestenId);
 client.once("ready", () => {
-    console.log(version + " ist online");
-    let rumtesten = client.channels.get(rumtestenId);
+
+    logger.info(version + " ist online");
     // rumtesten.send(version + " ist online");
-    // cocApi.clanWarlogByTag('#99UCPJ89').then(response => console.log(response)).catch(err => console.log(err));
+    // cocApi.clanWarlogByTag('#99UCPJ89').then(response => logger.info(response)).catch(err => logger.error(err));
 });
 client.login(token);
 
 const newcommerFeature = new newcommerClass(client);
 const messageHandler = new messageHandlerClass(client);
 
-client.on("error", (e) => console.error(e));
-client.on("warn", (e) => console.warn(e));
+client.on("error", (e) => logger.error(e));
+client.on("warn", (e) => logger.warn(e));
 
 client.on("message", (message) => {
     const channelId = message.channel.id;
@@ -102,7 +105,7 @@ schedule.scheduleJob('0 18 * * *', function () {
         try {
             newcommerFeature.checkNewcommerList()
         } catch (e) {
-            console.error("Fehler beim Newcomer Job ", e);
+            logger.error("Fehler beim Newcomer Job ", e);
         }
     }
 );

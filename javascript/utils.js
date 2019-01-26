@@ -3,6 +3,8 @@
 const fs = require("fs");
 const strings = require('../konstanten/strings.json');
 
+const logger = require('./logger');
+
 module.exports = class Utils {
 
     static addDays(date, days) {
@@ -12,8 +14,11 @@ module.exports = class Utils {
 
     static writeFile(object, filename) {
         fs.writeFile(filename, JSON.stringify(object, null, "\t"), 'utf8', (err) => {
-            if (err) throw err;
-            console.log('Data written to file ' + filename);
+            if (err) {
+                logger.error(err);
+            } else {
+                console.log('Data written to file ' + filename);
+            }
         });
     }
 

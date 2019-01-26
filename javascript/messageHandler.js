@@ -97,6 +97,18 @@ class messageHandler {
             case 'Nacht':
                 emoji = "💤";
                 break;
+            case"Au":
+                emoji = "🤦";
+                break;
+            case"Kaffee":
+                emoji = "☕";
+                break;
+            case"Zug":
+                emoji = "🚂";
+                break;
+            case"Sabber":
+                emoji = "🤤";
+                break;
             default:
                 return;
         }

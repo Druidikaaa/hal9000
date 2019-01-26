@@ -7,13 +7,13 @@ const Utils = require('./utils.js');
 
 const newcommerPath = __dirname + '/../newcommer.json';
 
+const logger = require('./logger');
+
 class newcommerFeature {
 
     constructor(client) {
         this.client = client
     }
-    
-
 
     /**
      * überprüft Die newcommer.json auf überfällige Probezeiten und gibt sie im Abstimmungschannel aus
@@ -106,7 +106,7 @@ class newcommerFeature {
         console.log("Probezeit " + probezeitBis);
         fs.readFile(newcommerPath, 'utf8', function readFileCallback(err, data) {
             if (err) {
-                console.error(err);
+                logger.error(err);
             } else {
                 let obj = JSON.parse(data);
                 if (!Array.isArray(obj.table)) {
@@ -124,14 +124,18 @@ class newcommerFeature {
      */
     readNewcommerList(message) {
         fs.readFile(newcommerPath, (err, data) => {
-            if (err) throw err;
-            let array = JSON.parse(data).table;
-            let string = "Probezeiten:\n";
-            if (array === undefined) return;
-            array.forEach(function (value) {
-                string = string + value + "\n";
-            });
-            message.channel.send(string);
+            if (err) {
+                logger.error(err);
+            } else {
+
+                let array = JSON.parse(data).table;
+                let string = "Probezeiten:\n";
+                if (array === undefined) return;
+                array.forEach(function (value) {
+                    string = string + value + "\n";
+                });
+                message.channel.send(string);
+            }
         });
     };
 
